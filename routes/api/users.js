@@ -11,9 +11,9 @@ const User = require("../../models/User");
 // $route GET api/users/test
 // @desc 返回的請求的json 數據
 // @access public
-router.get("/test", (req,res) => {
-    res.json({msg:"login works"})
-})
+// router.get("/test", (req,res) => {
+//     res.json({msg:"login works"})
+// })
 
 // $route POST api/users/register
 // @desc 返回的請求的json 數據
@@ -25,17 +25,20 @@ router.post("/register", (req,res)=> {
     User.findOne({email: req.body.email})
         .then((user)=> {
             if(user) {
-                return res.status(400).json({email:"郵箱已被註冊!"})
+                return res.status(400).json('郵箱已被註冊!');
+                // return res.status(400).json({email:'郵箱已被註冊!'});
             }else {
+                // 全球大頭照
                 const avatar = gravatar.url(req.body.email , {s: '200', r: 'pg', d: 'mm'});
 
                 const newUser = new User({
                     name: req.body.name,
                     email: req.body.email,
                     avatar,
-                    password: req.body.password
+                    password: req.body.password,
+                    identity: req.body.identity
                 })
-
+                // 密碼加密
                 bcrypt.genSalt(10, function(err, salt) {
                     bcrypt.hash(newUser.password , salt, function(err, hash) {
                         // Store hash in your password DB.
@@ -62,14 +65,20 @@ router.post("/login", (req, res) => {
     User.findOne({email})
         .then(user =>{
             if(!user){
-                return res.status(404).json({email:'用戶不存在'})
+                // return res.status(404).json({email:'用戶不存在'})
+                return res.status(404).json('用戶不存在');
             }
             // 密碼匹配
             // Load hash from your password DB.
             bcrypt.compare(password, user.password)
             .then( isMatch => {
                 if(isMatch) {
-                    const rule = {id:user.id,name:user.name};
+                    const rule = {
+                        id:user.id,
+                        name:user.name,
+                        avatar:user.avatar,
+                        identity: user.identity
+                    };
                     // jwt.sign(rule, "secret","過期時間", "箭頭函數")
                     jwt.sign(rule, keys.secretOrKey, {expiresIn:600}, (err,token)=>{
                         if(err) throw err;
@@ -80,7 +89,7 @@ router.post("/login", (req, res) => {
                     })
                     // res.json({msg: "success"});
                 }else {
-                    return res.status(404).json({password: "密碼錯誤!"});
+                    return res.status(404).json("密碼錯誤!");
                 }
             });
         });
@@ -95,7 +104,8 @@ router.get("/current", passport.authenticate("jwt", {session:false}) , (req,res)
     res.json({
         id: req.user.id,
         name: req.user.name,
-        email:req.user.email
+        email:req.user.email,
+        identity: req.user.identity
     })
 })
 
