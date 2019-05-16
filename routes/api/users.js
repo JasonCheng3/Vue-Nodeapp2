@@ -11,9 +11,9 @@ const User = require("../../models/User");
 // $route GET api/users/test
 // @desc 返回的請求的json 數據
 // @access public
-// router.get("/test", (req,res) => {
-//     res.json({msg:"login works"})
-// })
+router.get("/test", (req,res) => {
+    res.json({msg:"login works"})
+})
 
 // $route POST api/users/register
 // @desc 返回的請求的json 數據
@@ -80,7 +80,7 @@ router.post("/login", (req, res) => {
                         identity: user.identity
                     };
                     // jwt.sign(rule, "secret","過期時間", "箭頭函數")
-                    jwt.sign(rule, keys.secretOrKey, {expiresIn:600}, (err,token)=>{
+                    jwt.sign(rule, keys.secretOrKey, {expiresIn:3600}, (err,token)=>{
                         if(err) throw err;
                         res.json({
                             success: true,
