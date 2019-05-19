@@ -2,7 +2,7 @@
   "name": "Vue-nodeapp",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "client-install": "npm install --prefix client",
     "client": "npm start --prefix client",
@@ -25,6 +25,7 @@
     "nodemon": "^1.19.0",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
-    "vue": "^2.6.10"
+    "vue": "^2.6.10",
+    "validator": "^10.2.0"
   }
 }
