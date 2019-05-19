@@ -60,13 +60,13 @@ export default {
           {
             required: true,
             message: "用戶名不能為空",
-            trigger: 'blur'
+            trigger: "blur"
           },
           {
             min: 2,
             max: 30,
             message: "長度在2到30字符之間",
-            trigger: 'blur'
+            trigger: "blur"
           }
         ],
         email: [
@@ -74,53 +74,64 @@ export default {
             type: "email",
             required: true,
             message: "郵箱格式不正確",
-            trigger: 'blur'
+            trigger: "blur"
           }
         ],
         password: [
           {
             required: true,
             message: "密碼不能為空",
-            trigger: 'blur'
+            trigger: "blur"
           },
           {
             min: 6,
             max: 30,
             message: "長度在6到30之間",
-            trigger: 'blur'
+            trigger: "blur"
           }
         ],
         password2: [
           {
             required: true,
             message: "確認密碼不能為空",
-            trigger: 'blur'
+            trigger: "blur"
           },
           {
             min: 6,
             max: 30,
             message: "長度在6到30之間",
-            trigger: 'blur'
+            trigger: "blur"
           },
           {
             validator: validatePass2,
-            trigger: 'blur'
+            trigger: "blur"
           }
         ]
       }
     };
   },
-  methods:{
+  methods: {
     submitForm(formName) {
-      console.log(formName);
       this.$refs[formName].validate(valid => {
-        if(valid) {
-          alert('submit!');
+        if (valid) {
+          this.$axios.post('/api/users/register', this.registerUser)
+            .then(res => {
+              // 注册成功
+              this.$router.push('/login');
+              this.$message({
+                message: '注册成功！',
+                type: 'success'
+              });
+          
+            }).catch(err => {
+              console.log('註冊失敗 原因:');
+              console.log(err);
+            });
         } else {
-        console.log('error submit!!');
-        return false;
+          console.log("error submit!!");
+          return false;
         }
-      })
+      });
     }
   }
 };
