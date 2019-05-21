@@ -57,13 +57,13 @@ export default {
             // 登录成功
             const { token } = res.data;
             localStorage.setItem("eleToken", token);
-
+            console.log(token);
             // 解析token
             const decode = jwt_decode(token);
 
             // 存储数据
-            this.$store.dispatch("setIsAutnenticated", !this.isEmpty(decode));
-            this.$store.dispatch("setUser", decode);
+            // this.$store.dispatch("setIsAutnenticated", !this.isEmpty(decode));
+            // this.$store.dispatch("setUser", decode);
 
             // 页面跳转
             this.$router.push("/index");

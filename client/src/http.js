@@ -20,6 +20,7 @@ axios.interceptors.request.use(config => {
     // 加载
     startLoading()
     if (localStorage.eleToken)
+        // 設置統一的請求 header
         config.headers.Authorization = localStorage.eleToken
     return config
 }, error => {
@@ -35,13 +36,14 @@ axios.interceptors.response.use(response => {
     endLoading()
     Message.error(error.response.data)
 
-    const { status } = error.response
+    // 獲取錯誤代碼
+    const { status } = error.response;
     if (status == 401) {
-        Message.error('token值无效，请重新登录')
+        Message.error('token失效，請重新登入!');
         // 清除token
-        localStorage.removeItem('eleToken')
+        localStorage.removeItem('eleToken');
 
-        // 页面跳转
+        // 頁面跳轉
         router.push('/login')
     }
 
