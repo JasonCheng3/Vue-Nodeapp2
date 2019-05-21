@@ -53,7 +53,8 @@ export default {
 			}
 		},
 		showInfoList(){
-			console.log('個人訊息!');
+      console.log('個人訊息!');
+      this.$router.push('/infoshow');
 		},
 		logout() {
 			// console.log('退出');
