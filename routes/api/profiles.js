@@ -80,14 +80,13 @@ router.post('/edit/:id', passport.authenticate('jwt', {session:false}),(req,res)
         {$set: profileFields},
         {new: true}   
     ).then(profile => res.json(profile));
-    Profile.findOne
 });
 
 
 // $route POST api/profiles/delete
 // @desc 刪除信息接口
 // @access Private
-router.post("/delete/:id", passport.authenticate("jwt", {session:false}),(req,res)=> {
+router.delete("/delete/:id", passport.authenticate("jwt", {session:false}),(req,res)=> {
     Profile.findByIdAndRemove({_id: req.params.id })
         .then(profile => {
             profile.save().then(profile => res.json(profile));

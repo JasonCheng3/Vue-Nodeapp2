@@ -15,6 +15,12 @@
         border
         style="width: 100%"
       >
+                       <el-table-column
+                    type="index"
+                    label="序號"
+                    align='center'
+                    width="70">
+                </el-table-column>
         <el-table-column prop="date" label="創建時間" align="center" width="250" sortable>
           <template slot-scope="scope">
             <el-icon name="time"></el-icon>
@@ -48,16 +54,16 @@
               @click="handleEdit(scope.$index, scope.row)"
             >编辑</el-button>
             <el-button
-              size="small"
               type="danger"
+              size="small"
               icon="delete"
-              @click="handleDelete(scope.$index, scope.row)"
+               @click="handleDelete(scope.$index, scope.row)"
             >删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
-    <Dialog :dialog="dialog" @update="getProfile"></Dialog>
+    <Dialog :dialog="dialog" :formData="formData" @update="getProfile"></Dialog>
   </div>
 </template>
 
@@ -68,8 +74,19 @@ export default {
   data() {
     return {
       tableData: [],
+      formData: {
+        type: "",
+        describe: "",
+        income: "",
+        expend: "",
+        cash: "",
+        remark: "",
+        id: ""
+      },
       dialog: {
-        show: false
+        show: false,
+        title: '',
+        option: 'edit'
       }
     };
   },
@@ -80,7 +97,7 @@ export default {
     // 獲取表格數據
     getProfile() {
       this.$axios
-        .get('/api/profiles')
+        .get('/api/profile')
         .then(res => {
           console.log(res);
           this.tableData = res.data;
@@ -88,12 +105,49 @@ export default {
         .catch(err => console.log(err));
     },
     handleEdit(index, row) {
-      console.log(123);
+        // 編輯
+      console.log(this.dialog);
+      this.dialog = {
+          show: true,
+          title: '修改資金訊息',
+          option: 'edit'
+      };
+      this.formData = {
+          type : row.type,
+          describe: row.describe,
+          income: row.income,
+          expend: row.expend,
+          cash: row.cash,
+          remark: row.remark,
+          id: row._id
+      }
     },
     handleDelete(index, row) {
+
       console.log(456);
+      var ii= `${row._id}`;
+      console.log(ii);
+      console.log(`/api/profile/delete/${row._id}`);
+      this.$axios.delete(`/api/profile/delete/${row._id}`).then(res => {
+        this.$message("删除成功");
+        this.getProfile();
+      });
     },
     handleAdd() {
+     this.dialog = {
+          show: true,
+          title: '新增資金訊息',
+          option: 'add'
+      };
+      this.formData = {
+          type : '',
+          describe: '',
+          income: '',
+          expend: '',
+          cash: '',
+          remark: '',
+          id: ''
+      }
       this.dialog.show = true;
     }
   },

@@ -1,7 +1,7 @@
 <template>
   <div class="dialog">
     <el-dialog
-      title="添加資金訊息"
+      :title="dialog.title"
       :visible.sync="dialog.show"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -57,15 +57,7 @@ export default {
   name: "dialog",
   data() {
     return {
-      formData: {
-        type: "",
-        describe: "",
-        income: "",
-        expend: "",
-        cash: "",
-        remark: "",
-        id: ""
-      },
+
       format_type_list: [
         "提現",
         "提線手續費",
@@ -91,14 +83,16 @@ export default {
     };
   },
   props: {
-    dialog: Object
+    dialog: Object,
+    formData:　Object
   },
   methods:{
       onSubmit(form){
           this.$refs[form].validate(valid =>{
               if(valid) {
                 //   console.log(this.formData);
-                this.$axios.post('/api/profiles/add', this.formData)
+                const url = this.dialog.option == "add" ? "add" : `edit/${this.formData.id}`;
+                this.$axios.post(`/api/profile/${url}`, this.formData)
                 .then(res => {
                     //添加成功
                     this.$message({
