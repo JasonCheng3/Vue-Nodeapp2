@@ -15,12 +15,7 @@
         border
         style="width: 100%"
       >
-                       <el-table-column
-                    type="index"
-                    label="序號"
-                    align='center'
-                    width="70">
-                </el-table-column>
+        <el-table-column type="index" label="序號" align="center" width="70"></el-table-column>
         <el-table-column prop="date" label="創建時間" align="center" width="250" sortable>
           <template slot-scope="scope">
             <el-icon name="time"></el-icon>
@@ -57,11 +52,27 @@
               type="danger"
               size="small"
               icon="delete"
-               @click="handleDelete(scope.$index, scope.row)"
+              @click="handleDelete(scope.$index, scope.row)"
             >删除</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <el-row>
+        <el-col :span="24">
+          <div class="pagination">
+            <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page.sync="paginations.page_index"
+              :page-sizes="paginations.page_sizes"
+              :page-size="paginations.page_size"
+              :layout="paginations.layout"
+              :total="paginations.total"
+            ></el-pagination>
+          </div>
+        </el-col>
+      </el-row>
     </div>
     <Dialog :dialog="dialog" :formData="formData" @update="getProfile"></Dialog>
   </div>
@@ -73,7 +84,15 @@ export default {
   name: "fundList",
   data() {
     return {
+      paginations: {
+          page_index: 1, // 當前位於哪頁
+          total: 0, // 總數
+          page_size: 5, // 一頁顯示多少條
+          page_sizes:[5,10,15,20], //每頁顯示多少條
+          layout: "total, sizes,prev,pager,next,jumper" //翻頁屬性
+      },
       tableData: [],
+      alltableData: [],
       formData: {
         type: "",
         describe: "",
@@ -85,8 +104,8 @@ export default {
       },
       dialog: {
         show: false,
-        title: '',
-        option: 'edit'
+        title: "",
+        option: "edit"
       }
     };
   },
@@ -97,35 +116,46 @@ export default {
     // 獲取表格數據
     getProfile() {
       this.$axios
-        .get('/api/profile')
+        .get("/api/profile")
         .then(res => {
           console.log(res);
-          this.tableData = res.data;
+          this.alltableData = res.data;
+          // 設置分頁數據
+          this.setPaginations();
         })
         .catch(err => console.log(err));
     },
+    setPaginations(){
+        // 分頁屬性設置
+        this.paginations.total = this.alltableData.length;
+        this.paginations.page_index = 1;
+        this.paginations.page_size =5;
+        // 設置默認的分頁數據
+        this.tableData = this.alltableData.filter((item, index) => {
+            return index < this.paginations.page_size;
+        });
+    },
     handleEdit(index, row) {
-        // 編輯
+      // 編輯
       console.log(this.dialog);
       this.dialog = {
-          show: true,
-          title: '修改資金訊息',
-          option: 'edit'
+        show: true,
+        title: "修改資金訊息",
+        option: "edit"
       };
       this.formData = {
-          type : row.type,
-          describe: row.describe,
-          income: row.income,
-          expend: row.expend,
-          cash: row.cash,
-          remark: row.remark,
-          id: row._id
-      }
+        type: row.type,
+        describe: row.describe,
+        income: row.income,
+        expend: row.expend,
+        cash: row.cash,
+        remark: row.remark,
+        id: row._id
+      };
     },
     handleDelete(index, row) {
-
       console.log(456);
-      var ii= `${row._id}`;
+      var ii = `${row._id}`;
       console.log(ii);
       console.log(`/api/profile/delete/${row._id}`);
       this.$axios.delete(`/api/profile/delete/${row._id}`).then(res => {
@@ -134,22 +164,46 @@ export default {
       });
     },
     handleAdd() {
-     this.dialog = {
-          show: true,
-          title: '新增資金訊息',
-          option: 'add'
+      this.dialog = {
+        show: true,
+        title: "新增資金訊息",
+        option: "add"
       };
       this.formData = {
-          type : '',
-          describe: '',
-          income: '',
-          expend: '',
-          cash: '',
-          remark: '',
-          id: ''
-      }
+        type: "",
+        describe: "",
+        income: "",
+        expend: "",
+        cash: "",
+        remark: "",
+        id: ""
+      };
       this.dialog.show = true;
+    },
+    handleSizeChange(page_size) {
+        // 切換size
+        this.paginations.page_index =1;
+        this.paginations.page_size = page_size;
+        this.tableData = this.alltableData.filter((item, index)=> {
+            return index < page_size;
+        })
+    },
+    handleCurrentChange(page){
+        // 獲取當前頁面
+        let index = this.paginations.page_size * (page-1);
+        // 數據的總數
+        let nums = this.paginations.page_size * page;
+        // 容器
+        let tables = [];
+        
+        for(let i =index; i <nums; i++) {
+            if(this.alltableData[i]){
+                tables.push(this.alltableData[i]);
+            }
+            this.tableData = tables;
+        }
     }
+
   },
   components: {
     Dialog
@@ -167,4 +221,10 @@ export default {
 .btnRight {
   float: right;
 }
+
+.pagination {
+    text-align: right;
+    margin-top: 10px;
+}
+
 </style>
