@@ -1,9 +1,24 @@
 <template>
   <div class="fillConatiner">
     <div>
-      <el-form :inline="true" ref="add_data">
+      <el-form :inline="true" ref="add_data" :model="search_data">
+        <!-- 篩選 -->
+        <el-form-item label="按照時間篩選:">
+          <el-date-picker v-model="search_data.startTime" type="datetime" placeholder="选择開始时间"></el-date-picker>--
+          <el-date-picker v-model="search_data.endTime" type="datetime" placeholder="选择結束时间"></el-date-picker>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" size="small" icon="search" @click="handleSearch()">新增</el-button>
+        </el-form-item>
         <el-form-item class="btnRight">
-          <el-button type="primary" size="small" icon="view" @click="handleAdd()">新增</el-button>
+          <el-button
+            type="primary"
+            size="small"
+            icon="view"
+            @click="handleAdd()"
+            v-if="user.identity == 'manager'"
+          >新增</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -13,62 +28,59 @@
         :data="tableData"
         max-height="450"
         border
+        :default-sort="{prop: 'date', order: 'descending'}"
         style="width: 100%"
       >
-        <el-table-column type="index" label="序號" align="center" width="70"></el-table-column>
-        <el-table-column prop="date" label="創建時間" align="center" width="250" sortable>
+        <el-table-column type="index" label="序号" align="center" width="70"></el-table-column>
+        <el-table-column prop="date" label="创建时间" align="center" width="250" sortable>
           <template slot-scope="scope">
             <el-icon name="time"></el-icon>
             <span style="margin-left: 10px">{{ scope.row.date }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="type" label="收支類型" align="center" width="150"></el-table-column>
+        <el-table-column prop="type" label="收支类型" align="center" width="150"></el-table-column>
         <el-table-column prop="describe" label="收支描述" align="center" width="180"></el-table-column>
         <el-table-column prop="income" label="收入" align="center" width="170">
           <template slot-scope="scope">
-            <span style="color: #00d053">{{ scope.row.income }}</span>
+            <span style="color:#00d053">+ {{ scope.row.income }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="expend" label="支出" align="center" width="170">
           <template slot-scope="scope">
-            <span style="color: #f56767">{{ scope.row.expend }}</span>
+            <span style="color:#f56767">- {{ scope.row.expend }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="cash" label="帳戶現金" align="center" width="170">
+        <el-table-column prop="cash" label="账户现金" align="center" width="170">
           <template slot-scope="scope">
-            <span style="color: #4db3ff">{{ scope.row.cash }}</span>
+            <span style="color:#4db3ff">{{ scope.row.cash }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="備註" align="center" width="220"></el-table-column>
-        <el-table-column prop="operation" align="center" fixed="right" width="320" label="操作">
+        <el-table-column prop="remark" label="备注" align="center" width="220"></el-table-column>
+        <el-table-column prop="operation" align="center" label="操作" fixed="right" width="180">
           <template slot-scope="scope">
-            <el-button
-              type="warning"
-              size="small"
-              icon="edit"
-              @click="handleEdit(scope.$index, scope.row)"
-            >编辑</el-button>
+            <el-button type="warning" icon="edit" size="small" @click="onEditMoney(scope.row)">编辑</el-button>
             <el-button
               type="danger"
-              size="small"
               icon="delete"
-              @click="handleDelete(scope.$index, scope.row)"
+              size="small"
+              @click="onDeleteMoney(scope.row,scope.$index)"
             >删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-
+      <!-- 分页 -->
       <el-row>
         <el-col :span="24">
           <div class="pagination">
             <el-pagination
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-              :current-page.sync="paginations.page_index"
+              v-if="paginations.total > 0"
               :page-sizes="paginations.page_sizes"
               :page-size="paginations.page_size"
               :layout="paginations.layout"
               :total="paginations.total"
+              :current-page.sync="paginations.page_index"
+              @current-change="handleCurrentChange"
+              @size-change="handleSizeChange"
             ></el-pagination>
           </div>
         </el-col>
@@ -84,12 +96,17 @@ export default {
   name: "fundList",
   data() {
     return {
+      search_data: {
+        startTime: "",
+        endTime: ""
+      },
+      filterTableData: [],
       paginations: {
-          page_index: 1, // 當前位於哪頁
-          total: 0, // 總數
-          page_size: 5, // 一頁顯示多少條
-          page_sizes:[5,10,15,20], //每頁顯示多少條
-          layout: "total, sizes,prev,pager,next,jumper" //翻頁屬性
+        page_index: 1, // 當前位於哪頁
+        total: 0, // 總數
+        page_size: 5, // 一頁顯示多少條
+        page_sizes: [5, 10, 15, 20], //每頁顯示多少條
+        layout: "total, sizes,prev,pager,next,jumper" //翻頁屬性
       },
       tableData: [],
       alltableData: [],
@@ -109,6 +126,11 @@ export default {
       }
     };
   },
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    }
+  },
   created() {
     this.getProfile();
   },
@@ -120,20 +142,11 @@ export default {
         .then(res => {
           console.log(res);
           this.alltableData = res.data;
+          this.filterTableData = res.data;
           // 設置分頁數據
           this.setPaginations();
         })
         .catch(err => console.log(err));
-    },
-    setPaginations(){
-        // 分頁屬性設置
-        this.paginations.total = this.alltableData.length;
-        this.paginations.page_index = 1;
-        this.paginations.page_size =5;
-        // 設置默認的分頁數據
-        this.tableData = this.alltableData.filter((item, index) => {
-            return index < this.paginations.page_size;
-        });
     },
     handleEdit(index, row) {
       // 編輯
@@ -181,29 +194,62 @@ export default {
       this.dialog.show = true;
     },
     handleSizeChange(page_size) {
-        // 切換size
-        this.paginations.page_index =1;
-        this.paginations.page_size = page_size;
-        this.tableData = this.alltableData.filter((item, index)=> {
-            return index < page_size;
-        })
+      // 切換size
+      this.paginations.page_index = 1;
+      this.paginations.page_size = page_size;
+      this.tableData = this.alltableData.filter((item, index) => {
+        return index < page_size;
+      });
     },
-    handleCurrentChange(page){
-        // 獲取當前頁面
-        let index = this.paginations.page_size * (page-1);
-        // 數據的總數
-        let nums = this.paginations.page_size * page;
-        // 容器
-        let tables = [];
-        
-        for(let i =index; i <nums; i++) {
-            if(this.alltableData[i]){
-                tables.push(this.alltableData[i]);
-            }
-            this.tableData = tables;
-        }
-    }
+    handleCurrentChange(page) {
+      // 獲取當前頁面
+      let index = this.paginations.page_size * (page - 1);
+      // 數據的總數
+      let nums = this.paginations.page_size * page;
+      // 容器
+      let tables = [];
 
+      for (let i = index; i < nums; i++) {
+        if (this.alltableData[i]) {
+          tables.push(this.alltableData[i]);
+        }
+        this.tableData = tables;
+      }
+    },
+    setPaginations() {
+      // 分頁屬性設置
+      this.paginations.total = this.alltableData.length;
+      this.paginations.page_index = 1;
+      this.paginations.page_size = 5;
+      // 設置默認的分頁數據
+      this.tableData = this.alltableData.filter((item, index) => {
+        return index < this.paginations.page_size;
+      });
+    },
+    handleSearch() {
+      //篩選
+      if (!this.search_data.startTime || !this.search_data.endTime) {
+        this.$message({
+          type: "warning",
+          message: "請選擇時間區間"
+        });
+        this.getProfile();
+        return;
+      }
+
+      const sTime = this.search_data.startTime.getTime();
+      const eTime = this.search_data.endTime.getTime();
+
+      this.alltableData = this.filterTableData.filter(item => {
+        // console.log(item);
+        let date = new Date(item.date);
+        let time = date.getTime();
+        return time >= sTime && time <= eTime;
+      });
+
+      // 分頁數據
+      this.setPaginations();
+    }
   },
   components: {
     Dialog
@@ -223,8 +269,7 @@ export default {
 }
 
 .pagination {
-    text-align: right;
-    margin-top: 10px;
+  text-align: right;
+  margin-top: 10px;
 }
-
 </style>
