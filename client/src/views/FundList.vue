@@ -57,7 +57,7 @@
         </el-table-column>
       </el-table>
     </div>
-    <Dialog :dialog="dialog"></Dialog>
+    <Dialog :dialog="dialog" @update="getProfile"></Dialog>
   </div>
 </template>
 
@@ -80,7 +80,7 @@ export default {
     // 獲取表格數據
     getProfile() {
       this.$axios
-        .get("/api/profiles")
+        .get('/api/profiles')
         .then(res => {
           console.log(res);
           this.tableData = res.data;
